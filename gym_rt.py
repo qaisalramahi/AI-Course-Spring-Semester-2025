@@ -117,8 +117,7 @@ class ComplicatedRaceTrackEnvPygame(gym.Env):
         pygame.draw.rect(self.screen, (0, 255, 0), agent_rect)
         
         pygame.display.flip()
-        self.clock.tick(15)  # Limit to 30 FPS.
-        return self._get_obs()
+        self.clock.tick(15)  # Limit to 15 FPS.
     
     def _get_obs(self):
         """
