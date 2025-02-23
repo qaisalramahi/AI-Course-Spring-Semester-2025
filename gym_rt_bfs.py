@@ -5,6 +5,9 @@ import pygame
 import random
 from collections import deque
 
+TROPHY_SPRITE = pygame.image.load("./assets/trophy.png")
+BACKGROUND_SPRITE = pygame.image.load("./assets/background.png")
+
 class ComplicatedRaceTrackEnvPygame(gym.Env):
     """A Gym environment for a grid race track with obstacles rendered with Pygame."""
     metadata = {"render_modes": ["human"]}
@@ -97,19 +100,24 @@ class ComplicatedRaceTrackEnvPygame(gym.Env):
         
         # Clear the screen.
         self.screen.fill((0, 0, 0))
+
+        # Draw the background.
+        rect = pygame.Rect(0, 0, self.width, self.height)
+        scaled_background = pygame.transform.scale(BACKGROUND_SPRITE, (self.width, self.height))
+        self.screen.blit(scaled_background, rect)
         
         # Draw grid lines.
         for i in range(self.grid_size[0]):
             for j in range(self.grid_size[1]):
                 rect = pygame.Rect(j * self.cell_size, i * self.cell_size,
                                    self.cell_size, self.cell_size)
-                pygame.draw.rect(self.screen, (100, 100, 100), rect, 1)
+                pygame.draw.rect(self.screen, (15, 15, 15), rect, 1)
         
         # Draw obstacles.
         for (i, j) in self.obstacles:
             rect = pygame.Rect(j * self.cell_size, i * self.cell_size,
                                self.cell_size, self.cell_size)
-            pygame.draw.rect(self.screen, (150, 150, 150), rect)
+            pygame.draw.rect(self.screen, (100, 100, 100), rect)
         
         # Draw the agent as a green square.
         i, j = self.agent_pos
@@ -117,6 +125,13 @@ class ComplicatedRaceTrackEnvPygame(gym.Env):
                                  self.cell_size, self.cell_size)
         pygame.draw.rect(self.screen, (0, 255, 0), agent_rect)
         
+        # Draw the goal as a trophy.
+        i, j = self.grid_size[0] - 1, self.grid_size[1] - 1
+        trophy_rect = pygame.Rect(j * self.cell_size, i * self.cell_size,
+                                  self.cell_size, self.cell_size)
+        scaled_trophy = pygame.transform.scale(TROPHY_SPRITE, (self.cell_size, self.cell_size))
+        self.screen.blit(scaled_trophy, trophy_rect)
+
         pygame.display.flip()
         self.clock.tick(15)  # Limit to 15 FPS.
     
