@@ -8,7 +8,7 @@ ACTIONS = ["Left", "Right", "Up", "Down"]
 
 def find_qlearning_path(env: ComplicatedRaceTrackEnvPygame):
     # hyperparameters
-    num_episodes = 5000
+    num_episodes = 8000
     max_steps_per_episode = 300
     learning_rate = 0.1
     discount_rate = 0.99
@@ -17,7 +17,7 @@ def find_qlearning_path(env: ComplicatedRaceTrackEnvPygame):
     epsilon = 1.0          
     max_epsilon = 1.0
     min_epsilon = 0.01
-    epsilon_decay_rate = 0.005  # Increased decay rate
+    epsilon_decay_rate = 0.001  # Increased decay rate
     
     # Initialize the Q-table with keys ((row, col, gas_level), action).
     q_table = {}
@@ -129,8 +129,7 @@ def test_training(env, q_table):
         action = int(np.argmax(q_values))
         
         # Show the action being taken
-        gas_status = "LOW GAS!" if gas_level < 5 else f"Gas: {gas_level}"
-        print(f"Step {steps}: Position {state_pos}, {gas_status}, Taking action: {ACTIONS[action]}")
+        print(f"Step {steps}: Position {state_pos}, Gas: {gas_level}, Taking action: {ACTIONS[action]}")
         
         # Take the action
         state, reward, done, _, _ = env.step(action)
