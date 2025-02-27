@@ -1,61 +1,47 @@
 import time
-import timeit
 import pygame
-from environment import ComplicatedRaceTrackEnvPygame
+from environment import ComplicatedRaceTrackEnvPygame, START_POS, GOAL_POS, PATH_TILES, GAS_MAX, GRID_SIZE
 
-def find_dfs_path(env):
-        start = (0, 0)
-        goal = (env.grid_size[0]-1, env.grid_size[1]-1)
-        obstacles = env.obstacles
-        grid_size = env.grid_size
+def find_dfs_path(env: ComplicatedRaceTrackEnvPygame):
+    start = START_POS
+    goal = GOAL_POS
+    # Using a list as a stack: each element is (current_pos, path_actions, visited, gas)
+    stack = [(start, [], set({start}), GAS_MAX)]
+    
+    while stack:
+        current_pos, path_actions, visited, current_gas = stack.pop()  # DFS: pop from the end
+        # Check if we've reached the goal
+        if current_pos == goal:
+            print(f"Goal reached with actions {path_actions}")
+            return path_actions
+        
+        # Verify that the current path remains valid
+        valid, gas, pos = env.check(path_actions)
+        if not valid:
+            continue
 
-        stack = [(start, [])]  # Each element is (current_pos, path_actions)
-        visited = set()
-
-        while stack:
-            current_pos, path_actions = stack.pop()
-            if current_pos == goal:
-                return path_actions
-            if current_pos in visited:
+        # Explore possible actions from the current position
+        possible_actions = env.get_possible_actions(current_pos)
+        for action in possible_actions:
+            new_valid, new_gas, new_pos = env.check(path_actions + [action])
+            if not new_valid:
                 continue
-            visited.add(current_pos)
-            for action in range(4):
-                x, y = current_pos
-                if action == 0:  # Up
-                    new_x = max(x - 1, 0)
-                    new_y = y
-                elif action == 1:  # Down
-                    new_x = min(x + 1, grid_size[0] - 1)
-                    new_y = y
-                elif action == 2:  # Left
-                    new_y = max(y - 1, 0)
-                    new_x = x
-                elif action == 3:  # Right
-                    new_y = min(y + 1, grid_size[1] - 1)
-                    new_x = x
-                new_pos = (new_x, new_y)
-                # Determine next_state based on obstacle check
-                if new_pos in obstacles:
-                    next_state = current_pos
-                else:
-                    next_state = new_pos
-                if next_state not in visited:
-                    stack.append((next_state, path_actions + [action]))
-        return None
+
+            if new_pos not in visited:
+                new_visited = visited.copy()
+                new_visited.add(new_pos)
+                # Push the new state onto the stack
+                stack.append((new_pos, path_actions + [action], new_visited, new_gas))
+    return None
 
 if __name__ == "__main__":
-    env = ComplicatedRaceTrackEnvPygame(grid_size=(10, 10), cell_size=50)
-
-    # Measure time taken for pathfinding
-    print("Measuring time taken for 100 runs...")
-    res = timeit.timeit("find_dfs_path(env)", globals=globals(), number=100)
-    print(f"Time taken for 100 runs: {res:.3f} seconds")
+    env = ComplicatedRaceTrackEnvPygame()
 
     print("Finding path using DFS...")
-    start = time.time()
+    start_time = time.time()
     path = find_dfs_path(env)
-    end = time.time()
-    print(f"Path found. Time taken: {end - start:.3f} seconds")
+    end_time = time.time()
+    print(f"Path found. Time taken: {end_time - start_time:.3f} seconds")
 
     if path is None:
         print("No path found!")
@@ -66,15 +52,11 @@ if __name__ == "__main__":
         for action in path:
             if done:
                 break
-            # Render and step
             env.render()
             state, reward, done, _, _ = env.step(action)
-            print(f"Action: {action}, Position: {env.agent_pos}, Reward: {reward}")
             pygame.time.wait(500)  # Half-second delay to visualize steps
 
         # Final render and close
         env.render()
         pygame.time.wait(2000)  # Wait to show final state
         env.close()
-    
-        
