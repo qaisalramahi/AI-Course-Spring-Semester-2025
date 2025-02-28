@@ -1,6 +1,6 @@
 import time
 import pygame
-from environment import ComplicatedRaceTrackEnvPygame, START_POS, GOAL_POS, PATH_TILES, GAS_MAX, GRID_SIZE
+from environment import ComplicatedRaceTrackEnvPygame, START_POS, GOAL_POS, GAS_MAX
 
 def find_dfs_path(env: ComplicatedRaceTrackEnvPygame):
     start = START_POS

@@ -1,13 +1,11 @@
 import time
 import pygame
-from environment import ComplicatedRaceTrackEnvPygame, START_POS, GOAL_POS, PATH_TILES, GAS_MAX, GRID_SIZE
+from environment import ComplicatedRaceTrackEnvPygame, START_POS, GOAL_POS, GAS_MAX
 from collections import deque
 
 def find_bfs_path(env: ComplicatedRaceTrackEnvPygame):
         start = START_POS
         goal = GOAL_POS
-        path = PATH_TILES
-        grid_size = env.grid_size
 
         queue = deque([(start, [], set({start}), GAS_MAX)]) # Is (current_pos, path_actions, visited, gas)
         

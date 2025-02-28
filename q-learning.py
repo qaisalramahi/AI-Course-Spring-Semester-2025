@@ -2,7 +2,7 @@ import numpy as np
 import random
 import time
 import pygame
-from environment import ComplicatedRaceTrackEnvPygame, GAS_MAX, PATH_TILES, START_POS, GOAL_POS
+from environment import ComplicatedRaceTrackEnvPygame, START_POS, GOAL_POS, GAS_MAX
 
 ACTIONS = ["Left", "Right", "Up", "Down"]
 
