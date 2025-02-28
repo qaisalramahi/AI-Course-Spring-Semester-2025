@@ -88,7 +88,7 @@ class ComplicatedRaceTrackEnvPygame(gym.Env):
         path_pos = START_POS
         for action in path_actions:
             if path_gas <= 0:
-                print("Invalid path: out of gas")
+                # print("Invalid path: out of gas")
                 return False, 0, None
 
             if action == 0: # Left
@@ -101,7 +101,7 @@ class ComplicatedRaceTrackEnvPygame(gym.Env):
                 new_pos = (path_pos[0], path_pos[1] + 1)
             
             if new_pos not in PATH_TILES:
-                print("Invalid path: not a path tile")
+                # print("Invalid path: not a path tile")
                 return False, 0, None
             if new_pos in GAS_TILES:
                 path_gas = GAS_MAX
@@ -109,7 +109,7 @@ class ComplicatedRaceTrackEnvPygame(gym.Env):
             path_pos = new_pos
 
         if path_gas <= 0:
-            print("Invalid path: out of gas")
+            # print("Invalid path: out of gas")
             return False, 0, None
         return True, path_gas, path_pos
 
