@@ -3,7 +3,6 @@ import pygame
 import heapq
 from environment import ComplicatedRaceTrackEnvPygame, START_POS, GOAL_POS, GAS_MAX, GAS_TILES
 
-#test environment for the code
 
 def heuristic(position, goal, gas_level):
     """
