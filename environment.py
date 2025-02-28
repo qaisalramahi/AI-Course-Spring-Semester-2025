@@ -2,10 +2,10 @@ import gym
 from gym import spaces
 import numpy as np
 import pygame
-from copy import copy
 
 TROPHY_SPRITE = pygame.image.load("./assets/trophy.png")
-MAP_SPRITE = pygame.image.load("./assets/map.png")
+MAP_SPRITE = pygame.image.load("./assets/Map.png")
+CAR_SPRITE = pygame.image.load("./assets/Car.png")
 GRID_SIZE = (15, 15)
 CELL_SIZE = 32
 START_POS = (0, 0)
@@ -63,6 +63,7 @@ class ComplicatedRaceTrackEnvPygame(gym.Env):
         self.clock = pygame.time.Clock()
         
         self.agent_pos = START_POS
+        self._prev_pos = self.agent_pos
         self.gas = GAS_MAX
         self.done = False
         self.visited = set({START_POS})
@@ -160,6 +161,7 @@ class ComplicatedRaceTrackEnvPygame(gym.Env):
             # print("BAD: Revisited cell")
             reward = -1.0
         
+        self._prev_pos = self.agent_pos
         self.agent_pos = (new_x, new_y)
         self.visited.add((new_x, new_y))
         
@@ -185,11 +187,21 @@ class ComplicatedRaceTrackEnvPygame(gym.Env):
         scaled_background = pygame.transform.scale(MAP_SPRITE, (self.width, self.height))
         self.screen.blit(scaled_background, rect)
         
-        # Draw the agent as a green square.
+        # Draw the agent as a car.
         x, y = self.agent_pos
         agent_rect = pygame.Rect(x * self.cell_size, y * self.cell_size,
                                  self.cell_size, self.cell_size)
-        pygame.draw.rect(self.screen, (0, 255, 0), agent_rect)
+        transformed_agent = pygame.transform.scale(CAR_SPRITE, (self.cell_size, self.cell_size))
+        # Rotate the car based on the previous position.
+        if self._prev_pos[0] < self.agent_pos[0]:
+            transformed_agent = pygame.transform.rotate(transformed_agent, 90)
+        elif self._prev_pos[0] > self.agent_pos[0]:
+            transformed_agent = pygame.transform.rotate(transformed_agent, -90)
+        elif self._prev_pos[1] < self.agent_pos[1]:
+            transformed_agent = pygame.transform.rotate(transformed_agent, 180)
+        
+        self.screen.blit(transformed_agent, agent_rect)
+
         
         # Draw the goal as a trophy.
         x, y = GOAL_POS
