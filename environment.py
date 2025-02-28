@@ -154,7 +154,7 @@ class ComplicatedRaceTrackEnvPygame(gym.Env):
             reward = 5.0 # Small reward for finding gas.
         else:
             self.gas -= 1   # Consume gas.
-            reward = 0.1 # Small reward for moving.
+            reward = -0.1 # Small penalty for moving.
 
         # Give a big negative reward if the agent revisits a cell.
         if (new_x, new_y) in self.visited:

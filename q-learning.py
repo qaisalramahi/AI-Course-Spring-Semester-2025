@@ -8,7 +8,7 @@ ACTIONS = ["Left", "Right", "Up", "Down"]
 
 def find_qlearning_path(env: ComplicatedRaceTrackEnvPygame):
     # hyperparameters
-    num_episodes = 8000
+    num_episodes = 5000
     max_steps_per_episode = 300
     learning_rate = 0.1
     discount_rate = 0.99
