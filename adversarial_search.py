@@ -1,6 +1,7 @@
 import math
 import pygame
 import numpy as np
+import random 
 
 # Import constants directly from the provided environment.py
 from environment import (
@@ -350,7 +351,8 @@ def main():
     # Position the Police where it won't immediately block the car
     car_pos = START_POS
     prev_car_pos = car_pos
-    police_pos = (5, 5)  # Starting away from car's path
+    legal_spawn = list(PATH_TILES - {START_POS, GOAL_POS})
+    police_pos = random.choice(legal_spawn)
     prev_police_pos = police_pos
     state = (car_pos, police_pos, "car")
 
