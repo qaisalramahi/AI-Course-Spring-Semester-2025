@@ -93,6 +93,13 @@ def find_astar_path(env: ComplicatedRaceTrackEnvPygame):
     
     return None  # No path found
 
+
+#  <in breadth_first_search.py>
+def solve(env):
+    path = find_astar_path(env)
+    return path
+
+
 if __name__ == "__main__":
     env = ComplicatedRaceTrackEnvPygame()
 

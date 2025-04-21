@@ -34,6 +34,13 @@ def find_dfs_path(env: ComplicatedRaceTrackEnvPygame):
                 stack.append((new_pos, path_actions + [action], new_visited, new_gas))
     return None
 
+
+#  <in breadth_first_search.py>
+def solve(env):
+    path = find_dfs_path(env)
+    return path
+
+
 if __name__ == "__main__":
     env = ComplicatedRaceTrackEnvPygame()
 
