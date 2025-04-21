@@ -1,71 +1,114 @@
-# comparison.py  ── pretty version
+# comparison.py  – clean timing for Q‑learning
 import importlib, statistics, time, textwrap
 import matplotlib.pyplot as plt
 from environment import ComplicatedRaceTrackEnvPygame
 
-plt.style.use("ggplot")          # modern look without extra libs
+plt.style.use("ggplot")
 
 ALGORITHMS = {
-    "BFS": "breadth-first-search",
-    "DFS": "depth-first-search",
-    "A*":  "a_star_algorithm",
-    # "Q‑Learn": "q_learning",
+    "BFS":      "breadth-first-search",
+    "DFS":      "depth-first-search",
+    "A*":       "a_star_algorithm",
+    "Q‑Learn":  "q-learning",          # cached q_table.npy expected
 }
 
-RUNS       = 100
-GRID_SIZE  = (10, 10)
+RUNS      = 100
+GRID_SIZE = (15, 15)
 
-results = {name: {"steps": [], "seconds": []} for name in ALGORITHMS}
 
-for name, module_name in ALGORITHMS.items():
-    mod   = importlib.import_module(module_name)
+# ---------- warm‑up + measure training ----------
+
+train_times = {}
+for name, mod_name in ALGORITHMS.items():
+    env  = ComplicatedRaceTrackEnvPygame(grid_size=GRID_SIZE)
+    mod  = importlib.import_module(mod_name)
     solve = getattr(mod, "solve")
 
+    t0 = time.perf_counter()
+    solve(env)                    # trains if necessary, else just loads
+    train_times[name] = time.perf_counter() - t0
+
+
+# ---------- warm‑up pass (training / caching only) ----------
+for mod_name in ALGORITHMS.values():
+    env = ComplicatedRaceTrackEnvPygame(grid_size=GRID_SIZE)
+    importlib.import_module(mod_name).solve(env)   # discard result
+
+# ---------- timed benchmark ----------
+results = {name: {"steps": [], "seconds": []} for name in ALGORITHMS}
+
+for name, mod_name in ALGORITHMS.items():
+    mod   = importlib.import_module(mod_name)
+    solve = getattr(mod, "solve")
     for _ in range(RUNS):
         env = ComplicatedRaceTrackEnvPygame(grid_size=GRID_SIZE)
         t0  = time.perf_counter()
         path = solve(env)
-        dt   = time.perf_counter() - t0
-
-        results[name]["steps"].append(len(path))
+        dt  = time.perf_counter() - t0
         results[name]["seconds"].append(dt)
-
-# ---------- summary table (stdout) ----------
-print(f"{'Alg':8s}  steps(avg)  time(ms)")
+        results[name]["steps"].append(len(path))
+        
+        
+# ---------- table + capture lines ----------
+print(f"{'Alg':8s}  train(s)  exec(ms)  steps(avg)")
 table_lines = []
 for name in ALGORITHMS:
-    stp = statistics.mean(results[name]["steps"])
-    tms = statistics.mean(results[name]["seconds"]) * 1000
-    line = f"{name:8s}  {stp:9.2f}  {tms:7.2f}"
+    train_s = train_times[name]
+    exec_ms = statistics.mean(results[name]["seconds"]) * 1000
+    steps   = statistics.mean(results[name]["steps"])
+    line    = f"{name:8s}  {train_s:8.2f}  {exec_ms:8.2f}  {steps:9.2f}"
     print(line)
     table_lines.append(line)
 
-# concatenate for figure textbox
-table_text = "```\n" + "\n".join(table_lines) + "\n```"
 
-# ---------- plotting ----------
-labels = list(ALGORITHMS.keys())
-avg_steps = [statistics.mean(results[k]["steps"])    for k in labels]
-avg_time  = [statistics.mean(results[k]["seconds"])*1000 for k in labels]
+# ------------ single grouped bar chart (modern styling) ------------
+import numpy as np
+import matplotlib.pyplot as plt
+plt.rcParams.update({
+    "figure.dpi": 110,
+    "axes.edgecolor": "#444",
+    "axes.grid"    : True,
+    "grid.color"   : "#ddd",
+    "grid.linestyle": "--",
+})
 
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(7.2, 8.5))
+labels  = list(ALGORITHMS.keys())
+x       = np.arange(len(labels))
+width   = 0.24                       # bar width
 
-# --- steps bar ---
-bars1 = ax1.bar(labels, avg_steps)
-ax1.set_title("Average Path Length (steps)")
-ax1.set_ylabel("steps")
-ax1.bar_label(bars1, fmt="%.1f", padding=3)
+# data
+train_ms = [train_times[k]*1000 for k in labels]                     # s→ms
+exec_ms  = [statistics.mean(results[k]["seconds"])*1000 for k in labels]
+steps    = [statistics.mean(results[k]["steps"])          for k in labels]
 
-# --- time bar ---
-bars2 = ax2.bar(labels, avg_time)
-ax2.set_title(f"Average Wall‑clock Time over {RUNS} runs")
-ax2.set_ylabel("milliseconds")
-ax2.bar_label(bars2, fmt="%.2f ms", padding=3)
+# colours (flat UI palette)
+c_exec, c_train, c_steps = "#268bd2", "#f39c12", "#2ecc71"
 
-# --- add table as a textbox on the right ---
-fig.text(0.70, 0.50, textwrap.dedent(table_text),
-         family="monospace", fontsize=9,
-         bbox=dict(boxstyle="round", fc="white", ec="grey", alpha=0.85))
+fig, ax1 = plt.subplots(figsize=(9, 5))
+ax2 = ax1.twinx()                  # secondary axis for steps
 
-plt.tight_layout(rect=[0,0,0.68,1])   # leave space for table
+# bars
+b_exec  = ax1.bar(x - width, exec_ms,  width, label="Exec ms",  color=c_exec)
+b_train = ax1.bar(x, train_ms, width, label="Train ms", color=c_train)
+b_steps = ax2.bar(x + width,  steps,    width, label="Steps",    color=c_steps)
+
+# value‑labels
+for bars, ax in ((b_exec, ax1), (b_train, ax1), (b_steps, ax2)):
+    ax.bar_label(bars, fmt="%.1f", padding=3, fontsize=8)
+
+# axes styling
+ax1.set_xlabel("Algorithm")
+ax1.set_xticks(x, labels)
+ax1.set_ylabel("Time (ms)")
+ax2.set_ylabel("Path length (steps)")
+ax1.set_ylim(0, max(train_ms + exec_ms)*1.1)
+ax2.set_ylim(0, max(steps)*1.15)
+
+# legend (combine both axes’ handles)
+handles = [b_exec[0], b_train[0], b_steps[0]]
+labelsL = ["Execution (ms)", "Training (ms)", "Steps"]
+ax1.legend(handles, labelsL, frameon=False, loc="upper left")
+
+plt.title(f"Training vs Execution vs Steps ({RUNS} runs)")
+plt.tight_layout()
 plt.show()

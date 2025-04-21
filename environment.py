@@ -219,21 +219,21 @@ class ComplicatedRaceTrackEnvPygame(gym.Env):
         self.clock.tick(15)  # Limit to 15 FPS.
     
     def _get_obs(self):
-        """
-        Returns a grid observation:
-          - 0.0 for non-path cells.
-          - 0.25 for path cells.
-          - 0.75 for gas cells.
-          - 1.0 for the agent.
-        """
         obs = np.zeros(self.grid_size, dtype=np.float32)
+
         for (i, j) in PATH_TILES:
-            obs[i, j] = 0.25
+            if 0 <= i < self.grid_size[0] and 0 <= j < self.grid_size[1]:
+                obs[i, j] = 0.25           # road
+
         for (i, j) in GAS_TILES:
-            obs[i, j] = 0.75
+            if 0 <= i < self.grid_size[0] and 0 <= j < self.grid_size[1]:
+                obs[i, j] = 0.75           # gas station
+
         i, j = self.agent_pos
         obs[i, j] = 1.0
         return obs
+
+
     
     def close(self):
         pygame.quit()

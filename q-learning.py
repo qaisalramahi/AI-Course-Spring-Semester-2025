@@ -3,6 +3,8 @@ import random
 import time
 import pygame
 from environment import ComplicatedRaceTrackEnvPygame, START_POS, GOAL_POS, GAS_MAX
+from pathlib import Path
+
 
 ACTIONS = ["Left", "Right", "Up", "Down"]
 
@@ -101,6 +103,38 @@ def find_qlearning_path(env: ComplicatedRaceTrackEnvPygame):
     
     print(f"Final success rate: {success_count/num_episodes:.2%}")
     return q_table
+
+
+import numpy as np
+from pathlib import Path
+
+def _train_and_save(env, save_path: Path):
+    q_table = find_qlearning_path(env)      # your trainer
+    np.save(save_path, q_table)
+    return q_table
+
+def solve(env):
+    """
+    Used by comparison.py.
+    1. Loads q_table.npy; if absent, trains once and caches it.
+    2. Executes greedy policy and returns the action list.
+    """
+    table_path = Path(__file__).with_name("q_table.npy")
+    q_table = (np.load(table_path, allow_pickle=True).item()
+               if table_path.exists()
+               else _train_and_save(env, table_path))
+
+    state_pos, gas_level, done, actions = env.agent_pos, GAS_MAX, False, []
+    while not done and len(actions) < 300:
+        valid = env.get_possible_actions(state_pos)
+        q_vals = [q_table[(state_pos + (gas_level,), a)]
+                  if a in valid else -float('inf')
+                  for a in range(env.action_space.n)]
+        action = int(np.argmax(q_vals))
+        _, _, done, _, _ = env.step(action)
+        actions.append(action)
+        state_pos, gas_level = env.agent_pos, env.gas
+    return actions
 
 
 def test_training(env, q_table):
